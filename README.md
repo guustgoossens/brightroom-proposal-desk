@@ -3,6 +3,8 @@
 MSc DSAIB Case 02: from a client enquiry to a feasible, **draft** proposal (or the clarification needed first).
 Convex (local) + Claude Sonnet 5.5 sub-agents + TypeSafe Jev + a deterministic pricing engine. UI styled from Pacium's Figma tokens.
 
+**[Watch the demo video (5:47)](demo/brightroom-demo.mp4)**: live runs of a routine case, an infeasible case and the missing-information cases, then the 18-case evaluation. Narration is a synthetic voice (script in [demo/script.md](demo/script.md)). Test evidence: [docs/TESTING.md](docs/TESTING.md).
+
 ## Design rationale
 - **5A form:** Application (a small purpose-built web app) with an agentic back end (sub-agents). Complexity is justified by the failure mode in the brief: a persuasive proposal that is infeasible. A single prompt cannot guarantee totals or constraints, so the money and limits are code.
 - **Three lanes, each doing what it is best at**

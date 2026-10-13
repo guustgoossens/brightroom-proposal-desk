@@ -13,3 +13,4 @@ demo/recording.json
 demo/timeline.json
 demo/raw/
 demo/*.mp4
+!demo/brightroom-demo.mp4
