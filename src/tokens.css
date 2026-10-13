@@ -1,0 +1,98 @@
+/* Design tokens. Components use ONLY these variables.
+   Source: Pacium Product (Figma file cUpaCNrjpOwPeukTFH5ZZS, page "Styling"):
+   UI/* warm neutrals, Pacium/Teal brand ramp, Amber/Sky/Scarlet/Emerald/Pink status ramps,
+   Zalando Sans + Geist, radii 4/8, "drop main" shadow (blur 10, black 8%). */
+:root {
+  color-scheme: light dark;
+
+  --font-sans: "Zalando Sans", "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Pacium body is 14px / 12px / 11px */
+  --text-xs: 0.6875rem;
+  --text-sm: 0.75rem;
+  --text-md: 0.875rem;
+  --text-lg: 1rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.625rem;
+  --leading: 1.5;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --dur: 200ms;
+
+  /* light theme: Pacium "White Mode" */
+  --bg: #faf9f7;            /* UI/75 */
+  --surface: #fefdfb;       /* UI/50 */
+  --surface-2: #f6f4ef;     /* UI/100 */
+  --border: #ededed;        /* UI/200 */
+  --border-strong: #dfdfdf; /* UI/300 */
+  --text: #0a0a0a;          /* UI/1000 */
+  --text-muted: #747474;    /* UI/600 */
+
+  --accent: #2d776d;          /* Teal/700 (AA on white) */
+  --accent-soft: #ebf9f7;     /* Teal/75 */
+  --accent-contrast: #ffffff;
+
+  --success: #267a5f;         /* Emerald/700 */
+  --success-soft: #e7fcf3;    /* Emerald/75 */
+  --warning: #985711;         /* Amber/700 */
+  --warning-soft: #fdede0;    /* Amber/100 */
+  --danger: #c01c2d;          /* Scarlet/700 */
+  --danger-soft: #feebea;     /* Scarlet/100 */
+  --info: #227684;            /* Sky/700 */
+  --info-soft: #ebf9fc;       /* Sky/75 */
+
+  /* the three processing lanes */
+  --lane-llm: #2d776d;        /* Teal/700, the Pacium brand */
+  --lane-jev: #ac278b;        /* Pink/700 */
+  --lane-code: #227684;       /* Sky/700 */
+
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
+  --shadow-sm: 0 0 10px rgb(0 0 0 / 0.08);   /* Figma effect style "drop main" */
+  --shadow-md: 0 8px 24px -8px rgb(10 10 10 / 0.14), 0 0 10px rgb(0 0 0 / 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface-2: #1c1c1c;
+    --border: #2a2a2a;
+    --border-strong: #424242;   /* UI/800 */
+    --text: #f6f4ef;            /* UI/100 */
+    --text-muted: #959595;      /* UI/500 */
+
+    --accent: #48d6c3;          /* Teal/400 */
+    --accent-soft: #153d37;     /* Teal/900 */
+    --accent-contrast: #0a0a0a;
+
+    --success: #37e0af;         /* Emerald/400 */
+    --success-soft: #123e30;    /* Emerald/900 */
+    --warning: #fea657;         /* Amber/400 */
+    --warning-soft: #502a02;    /* Amber/900 */
+    --danger: #faa29d;          /* Scarlet/400 */
+    --danger-soft: #650d15;     /* Scarlet/900 */
+    --info: #68e5fc;            /* Sky/300 */
+    --info-soft: #0d3c44;       /* Sky/900 */
+
+    --lane-llm: #48d6c3;
+    --lane-jev: #eba2d3;        /* Pink/400 */
+    --lane-code: #68e5fc;
+
+    --shadow-sm: 0 0 10px rgb(0 0 0 / 0.5);
+    --shadow-md: 0 10px 28px -8px rgb(0 0 0 / 0.7), 0 0 10px rgb(0 0 0 / 0.4);
+  }
+}

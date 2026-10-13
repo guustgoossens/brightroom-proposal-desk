@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.env.local
+.convex/
+convex-dev.log
+*.log
+.DS_Store
+# demo build artefacts (the narration script and recorder are kept; the video is shared separately)
+demo/audio/
+demo/frames/
+demo/frames.txt
+demo/raw/
+demo/*.mp4
