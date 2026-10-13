@@ -9,5 +9,7 @@ convex-dev.log
 demo/audio/
 demo/frames/
 demo/frames.txt
+demo/recording.json
+demo/timeline.json
 demo/raw/
 demo/*.mp4

@@ -2,7 +2,7 @@
 // narrates with macOS `say`, and muxes with ffmpeg. Run: bun demo/record.ts
 // Needs: the app on :5173, `bunx convex dev` running, Google Chrome installed, ffmpeg.
 import { chromium, type Page } from "playwright-core";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { $ } from "bun";
 
 const APP = "http://localhost:5173";
@@ -29,8 +29,9 @@ const top = (page: Page) => page.evaluate(() => window.scrollTo({ top: 0, behavi
 const rail = (label: string) => `.rail__row:has(.rail__label:text-is("${label}"))`;
 const play = (label: string) => `${rail(label)} .rail__play`;
 
+// Called from a scene's `pre`, i.e. after the previous scene started the run and spoke for a while:
+// just wait until the run is no longer running (it may already be done).
 async function waitRun(page: Page) {
-  await page.waitForFunction(() => (document.querySelector(".runhead__meta")?.textContent ?? "").includes("running"), null, { timeout: 12000 }).catch(() => {});
   await page.waitForFunction(() => {
     const m = document.querySelector(".runhead__meta")?.textContent ?? "";
     return m !== "" && !m.includes("running");
@@ -72,7 +73,7 @@ const scenes: Scene[] = [
   },
   {
     id: "s3a-routine",
-    text: "First a routine case. Q3: ten people, four hours, wheelchair access, coffee and a projector, six hundred euros. I press play and run it live. Claude extracts the brief, Jev triages in about half a second, and the code prices it.",
+    text: "First a routine case. Q3: ten people, four hours, wheelchair access, coffee and a projector, six hundred euros. I press play, and this is a real run, nothing is cached. The language model reads the messy text into a structured brief. Jev answers a handful of typed questions in a single call, in about half a second. The code picks the cheapest venue that meets capacity, duration and accessibility, and adds up the lines. Then the writer drafts the email, and a code check and a second model audit it.",
     run: async (p) => { await glideClick(p, play("Q3")); await sleep(500); },
   },
   {
@@ -83,7 +84,7 @@ const scenes: Scene[] = [
   },
   {
     id: "s4a-hard",
-    text: "Now a difficult case. Q2: twenty people, coffee and lunch both required, a budget of eight hundred fifty euros. Run it live.",
+    text: "Now a difficult case. Q2: twenty people, coffee and lunch both required, a budget of eight hundred fifty euros. Same pipeline, again live. This time the code should find that the package does not fit, and the writer has to explain that without inventing anything.",
     run: async (p) => { await top(p); await glideClick(p, play("Q2")); await sleep(500); },
   },
   {
@@ -108,7 +109,7 @@ const scenes: Scene[] = [
   },
   {
     id: "s5a-missing",
-    text: "Missing information. Q4 only says: can you organise a team workshop next month, send me your best offer.",
+    text: "Missing information. Q4 only says: can you organise a team workshop next month, send me your best offer. There is almost nothing to extract, so the right behaviour is to ask, not to guess.",
     run: async (p) => { await top(p); await glideClick(p, play("Q4")); await sleep(500); },
   },
   {
@@ -135,13 +136,23 @@ const scenes: Scene[] = [
 ];
 
 // ---------------------------------------------------------------- narration audio
+// TTS=kokoro (local neural voice, see demo/kokoro_tts.py) or the default macOS `say`.
+// Kokoro needs: KOKORO_PY (python with kokoro-onnx), KOKORO_MODEL_DIR (kokoro-v1.0.onnx + voices-v1.0.bin), `brew install espeak-ng`.
+const TTS = process.env.TTS ?? "say";
+const ext = TTS === "kokoro" ? "wav" : "aiff";
+const audioPath = (id: string) => `${DIR}audio/${id}.${ext}`;
 const durations: number[] = [];
 for (const s of scenes) {
-  await $`say -v ${VOICE} -r ${RATE} -o ${DIR}audio/${s.id}.aiff ${s.text}`;
-  const out = await $`ffprobe -v error -show_entries format=duration -of csv=p=0 ${DIR}audio/${s.id}.aiff`.text();
+  if (TTS === "kokoro") {
+    writeFileSync(`${DIR}audio/${s.id}.txt`, s.text);
+    await $`${process.env.KOKORO_PY} -I ${DIR}kokoro_tts.py ${process.env.KOKORO_MODEL_DIR} ${DIR}audio/${s.id}.txt ${audioPath(s.id)}`;
+  } else {
+    await $`say -v ${VOICE} -r ${RATE} -o ${audioPath(s.id)} ${s.text}`;
+  }
+  const out = await $`ffprobe -v error -show_entries format=duration -of csv=p=0 ${audioPath(s.id)}`.text();
   durations.push(parseFloat(out));
 }
-writeFileSync(`${DIR}script.md`, `# Demo narration (synthetic voice: ${VOICE}). Re-record in your own voice if you prefer.\n\n` + scenes.map((s, i) => `## ${i + 1}. ${s.id} (~${durations[i].toFixed(0)} s)\n\n${s.text}\n`).join("\n"));
+writeFileSync(`${DIR}script.md`, `# Demo narration (synthetic voice: ${TTS === "kokoro" ? "Kokoro af_heart" : VOICE}). Re-record in your own voice if you prefer.\n\n` + scenes.map((s, i) => `## ${i + 1}. ${s.id} (~${durations[i].toFixed(0)} s)\n\n${s.text}\n`).join("\n"));
 console.log("narration total s:", durations.reduce((a, b) => a + b, 0).toFixed(0));
 
 // ---------------------------------------------------------------- record
@@ -197,18 +208,7 @@ await cdp.send("Page.stopScreencast");
 await ctx.close();
 await browser.close();
 
-// ---------------------------------------------------------------- mux
-const list = frames.map((f, i) => {
-  const from = i === 0 ? t0 : f.t;
-  const to = i + 1 < frames.length ? frames[i + 1].t : f.t + 1000;
-  return `file '${f.file}'\nduration ${Math.max(0.01, (to - from) / 1000).toFixed(3)}`;
-});
-list.push(`file '${frames[frames.length - 1].file}'`);
-writeFileSync(`${DIR}frames.txt`, list.join("\n"));
-const inputs = scenes.flatMap((s) => ["-i", `${DIR}audio/${s.id}.aiff`]);
-const filters = scenes.map((_, i) => `[${i + 1}:a]adelay=${Math.round(starts[i] * 1000)}|${Math.round(starts[i] * 1000)}[a${i}]`).join(";");
-const mix = scenes.map((_, i) => `[a${i}]`).join("") + `amix=inputs=${scenes.length}:dropout_transition=0:normalize=0[aout]`;
-await $`ffmpeg -y -f concat -safe 0 -i ${DIR}frames.txt ${inputs} -filter_complex ${filters + ";" + mix} -map 0:v -map [aout] -vf fps=25,format=yuv420p -c:v libx264 -preset medium -crf 21 -c:a aac -b:a 160k -shortest ${DIR}brightroom-demo.mp4`.quiet();
-const dur = (await $`ffprobe -v error -show_entries format=duration -of csv=p=0 ${DIR}brightroom-demo.mp4`.text()).trim();
-rmSync(`${DIR}frames`, { recursive: true, force: true });
-console.log("DONE", `${DIR}brightroom-demo.mp4`, dur, "s");
+// ---------------------------------------------------------------- hand over to mux.ts
+// Everything the mux needs is saved first, so a failure there never costs a re-recording.
+writeFileSync(`${DIR}recording.json`, JSON.stringify({ W, H, t0, frames, starts, durations, ids: scenes.map((s) => s.id), ext }, null, 2));
+await $`bun ${DIR}mux.ts`;

@@ -28,12 +28,13 @@ Baseline = single-prompt answer without catalogue code; prototype = LLM + Jev + 
 | V12-contradictory-headcount | We have 8 people on the team page but 14 on the sign-up sheet, not sure which is right. 4 hours, coffee for everyone, budget €500. | needs_clarification | no answer · FAIL | needs_clarification · audit ✓ · PASS |
 | V13-typos-no-budget | helo, we r aboot 10 ppl, 4 hrs, cofee for evryone and a projecter plz, no idea on budget yet | provisional / €355 | feasible / €355 · PASS | provisional / €355 · audit ✓ · PASS |
 
-**Pass rate:** prototype 18/18, baseline 14/18.
+**Pass rate (newest run per case):** prototype 18/18, baseline 14/18.
 
 ### Reading the table honestly
 - One run per case per system (LLM output is non-deterministic); expected values were written by us from the catalogue, not by an independent party.
 - Baseline scoring is **lenient**: it only checks the feasible flag and, when feasible, the total. It does not check clarification questions, invented assumptions, unlisted items or promises. Failures: Q4 and V12 (no clarification path: it answered anyway), V3 (called a feasible proposal infeasible), V9 (refused on the discount).
   Even "passing" baseline answers can hide problems, e.g. V1 silently assumed coffee + lunch for 15 people (€810) when the client only said "food".
+- **Run-to-run variance (V11):** on one re-run the extractor classed "coffee for everyone" as only preferred in the prompt-injection case, so the package dropped the coffee (€240 instead of €320) and V11 failed (17/18). Jev had flagged it (S1 hardness 85% vs the LLM's "preferred"). We tightened the extractor rule (a plainly requested service is required) and it held across 3 re-runs; the desk now shows a "Check the must-haves" warning whenever Jev and the LLM disagree on a service. V11 is therefore also not a clean held-out case.
 - Prototype failures found during testing: V9 (extractor filed a discount as an unlisted service, making a feasible package look infeasible). Root cause was a contradictory line in the extractor prompt; fixed, re-run, now PASS. The table shows the post-fix result.
 - Every prototype run also passed the deterministic draft check (`verifyDraft`) and the LLM auditor; see the audit column.
 
